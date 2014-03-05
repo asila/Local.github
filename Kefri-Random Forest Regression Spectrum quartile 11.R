@@ -113,7 +113,20 @@ nrow(data.trans)
 # Specify spectral variables as range and non-spectral variables by name without quotes or column no. Default m601.7:m4001.6 for 1st Derivs and m603.6:m3997.8 for continuum removed.
 
 # Variable list 
-#Depth,Cultivated,#pH, m3.Al, m3.B, m3.Cu ,m3.Fe, m3.Mn, m3.P, m3.S, m3.Zn, PSI,#ExNa, ExCa, ExMg, ExK, ExBas, ESR, ESP, ECd, ExAc, CaMg,#llwcgpct,lshrinkpct,piwcgpct,plwcgpct,#a.brooks,b.brooks,alpha.brooks,wcvfri,sucjkgi,wcvfrsat,wcvfrfc10,wcvfrfc33,wcvfrwp1500,wcvfrairdry,awc1,awc2,ksat,#psa.asand,psa.asilt,psa.aclay,#psa.c1sand,psa.c1silt,psa.c1clay,psa.c2sand,psa.c2silt,psa.c2clay,psa.c3sand,psa.c3silt,psa.c3clay,psa.c4sand,psa.c4silt,psa.c4clay,#psa.w1sand,psa.w1silt,psa.w1clay,psa.w2sand,psa.w2silt,psa.w2clay,psa.w3sand,psa.w3silt,psa.w3clay,psa.w4sand,psa.w4silt,psa.w4clay,#Total.Nitrogen,Total.Carbon,Acidified.Nitrogen,Acidified.Carbon,#Na,Mg,Al,P,S,Cl,K,Ca,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Ga,As,#Br,Rb,Sr,Y,Zr,Ba,La,Ce,Pr,Nd,Sm,Hf,Ta,W,Pb,Bi,Th,#Quartz,Albite,Microcline,Hornblende,Tremolite,Diopside,muscovite,Montmorillonite,Clinochlore,#Kaolinite,Halloysite,Vermiculite,Hematite,Goethite,Magnetite,Gibbsite,Ilmenite,Anatase,Calcite,Gypsum,Dolomite,#X601.7:X4001.6
+#Depth,Cultivated,
+#pH, m3.Al, m3.B, m3.Cu ,m3.Fe, m3.Mn, m3.P, m3.S, m3.Zn, PSI,
+#ExNa, ExCa, ExMg, ExK, ExBas, ESR, ESP, ECd, ExAc, CaMg,
+#llwcgpct,lshrinkpct,piwcgpct,plwcgpct,
+#a.brooks,b.brooks,alpha.brooks,wcvfri,sucjkgi,wcvfrsat,wcvfrfc10,wcvfrfc33,wcvfrwp1500,wcvfrairdry,awc1,awc2,ksat,
+#psa.asand,psa.asilt,psa.aclay,
+#psa.c1sand,psa.c1silt,psa.c1clay,psa.c2sand,psa.c2silt,psa.c2clay,psa.c3sand,psa.c3silt,psa.c3clay,psa.c4sand,psa.c4silt,psa.c4clay,
+#psa.w1sand,psa.w1silt,psa.w1clay,psa.w2sand,psa.w2silt,psa.w2clay,psa.w3sand,psa.w3silt,psa.w3clay,psa.w4sand,psa.w4silt,psa.w4clay,
+#Total.Nitrogen,Total.Carbon,Acidified.Nitrogen,Acidified.Carbon,
+#Na,Mg,Al,P,S,Cl,K,Ca,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Ga,As,
+#Br,Rb,Sr,Y,Zr,Ba,La,Ce,Pr,Nd,Sm,Hf,Ta,W,Pb,Bi,Th,
+#Quartz,Albite,Microcline,Hornblende,Tremolite,Diopside,muscovite,Montmorillonite,Clinochlore,
+#Kaolinite,Halloysite,Vermiculite,Hematite,Goethite,Magnetite,Gibbsite,Ilmenite,Anatase,Calcite,Gypsum,Dolomite,
+#X601.7:X4001.6
 
 ### Select the X variables for the forest model.  EXCLUDE THE Y VARIABLE
 
@@ -143,7 +156,7 @@ yy<-yyy[j]
 	nrow(datatr) # show number of rows of complete data
 	
 	## Prepare metadata file for target variable
-	meta = data.in[complete.cases(data.in[,yy]),]
+	#meta = data.in[complete.cases(data.in[,yy]),]
 	
 	#soil.starts <- select.list(as.character(colnames(meta)), graphics=TRUE,title="Soil data starts...",multiple=TRUE) # Omit bands with NA
 	
@@ -164,7 +177,7 @@ yy<-yyy[j]
 	# Plot OOB residuals
 	length(datatr.rf$y)
 	length(datatr.rf$predicted)
-	nrow(metadat)
+	#nrow(metadat)
 	resids <- data.frame(metadat, datatr.rf$y, datatr.rf$predicted)
 	resids <- rename(resids, c(datatr.rf.y="actual")) 
 	resids <- rename(resids, c(datatr.rf.predicted="predicted")) 
@@ -182,25 +195,34 @@ yy<-yyy[j]
 	model.pred<-paste("Model predicted ",yy)
 	oob<-paste("Out of Bag ",yy)
 	
-	mp1 <- ggplot(datatr, aes(modres1, datatr[,yy])) + geom_point(shape=1) + geom_smooth(method = "lm") + xlab("Predicted") + ylab("Actual") +
-	  opts(title =model.pred,  axis.text.x = theme_text(size=11),
-	  axis.title.x = theme_text(hjust=0.55, vjust = 0, size=12),
-	  axis.text.y = theme_text(size=11),
-	  axis.title.y = theme_text(hjust=0.6, vjust=0.35,angle=90,size=12),
-	  plot.title=theme_text(hjust=0.55,vjust=1,size=13,face="bold"),
-	  panel.border=theme_rect(size=0.75),
-	  legend.position="none"
-	   )
-	# Plot predictions using out-of-bag
-	mv1 <- ggplot(datatr, aes(datatr.rf$predicted, datatr.rf$y)) + geom_point(shape=1) + geom_smooth(method = "lm") + xlab("Predicted") + ylab("Actual") + 
-	  opts(title =oob, axis.text.x = theme_text(size=11),
-	  axis.title.x = theme_text(hjust=0.55, vjust = 0, size=12),
-	  axis.text.y = theme_text(size=11),
-	  axis.title.y = theme_text(hjust=0.6, vjust=0.35,angle=90,size=12),
-	  plot.title=theme_text(hjust=0.55,vjust=1,size=13,face="bold"),
-	  panel.border=theme_rect(size=0.75),
-	  legend.position="none"
-	   )
+	mp1 <- ggplot(datatr, aes(modres1, datatr[,yy])) + geom_point(shape=1)+
+    theme_bw()+
+    geom_smooth(method = "lm") + xlab("Predicted") + ylab("Actual") +
+    
+    labs(title=model.pred)+
+    theme(title=element_text(size=11))+
+    theme(axis.text.x=element_text(size=12,hjust=0.55))+
+    theme(axis.title.x=element_text(size=12,hjust=0.55,colour="blue"))+
+    theme(axis.title.y = element_text(hjust=0.6, vjust=0.35,angle=90,size=12))+
+    theme(plot.title=element_text(hjust=0.6,vjust=1,size=14,face="bold"))+
+    theme(panel.border=element_rect(size=0.75))+
+    theme(legend.position="none")
+    mp1
+  
+# Plot predictions using out-of-bag
+	mv1 <- ggplot(datatr, aes(datatr.rf$predicted, datatr.rf$y)) + 
+  theme_bw()+
+  geom_point(shape=1) + geom_smooth(method = "lm") + xlab("Predicted") + ylab("Actual")+ 
+	labs(title =oob)+
+  theme(axis.text.x = element_text(size=11))+
+  theme(axis.text.x=element_text(size=12,hjust=0.55))+
+  theme(axis.title.x=element_text(size=12,hjust=0.55,colour="blue"))+
+  theme(axis.title.y = element_text(hjust=0.6, vjust=0.35,angle=90,size=12))+
+  theme(plot.title=element_text(hjust=0.6,vjust=1,size=14,face="bold"))+
+  theme(panel.border=element_rect(size=0.75))+
+  theme(legend.position="none")
+	mv1
+
 	# Print plots together
 	grid.newpage()
 	vport <- function(x, y) viewport(layout.pos.row=x,layout.pos.col=y);
@@ -231,23 +253,21 @@ yy<-yyy[j]
 	
 	
 	## Plot Mean decrease accuracy %IncMSE against wavenumber. Deafult wavenmbers is 600,400.
-	p1 <- ggplot(imp2,aes(imp2[,1],imp2[,2])) + geom_line() + scale_x_continuous(limits=c(500,4000)) + scale_x_reverse() + xlab(expression(paste("Wavenumber ","(",cm^-1,")"))) + ylab(expression(paste("%IncMSE"))) + 
-	 opts(title = "", axis.text.x = theme_text(size=10),
-	  axis.title.x = theme_text(hjust=0.55, vjust = 0, size=10),
-	  axis.text.y = theme_text(size=10),
-	  axis.title.y = theme_text(hjust=0.6, vjust=0.35,angle=90,size=10),
-	  plot.title=theme_text(hjust=0.55,vjust=1,size=10,face="plain"),
-	  panel.border=theme_rect(size=0.75),
+p1 <- ggplot(imp2,aes(imp2[,1],imp2[,2])) + geom_line() + scale_x_continuous(limits=c(500,4000)) + scale_x_reverse() + xlab(expression(paste("Wavenumber ","(",cm^-1,")"))) + ylab(expression(paste("%IncMSE"))) + 
+	 labs(title = "")+
+  theme(axis.text.x = element_text(size=10))+
+  theme(axis.title.x = element_text(hjust=0.55, vjust = 0, size=10),axis.text.y     = element_text(size=10),axis.title.y = element_text(hjust=0.6, vjust=0.35,angle=90,size=10),plot.title=element_text(hjust=0.55,vjust=1,size=10,face="plain"),
+	 # panel.border=element_rect(size=0.75),
 	  legend.position="none"
 	   )
 	# Plot Mean decrease MSE IncNodePurity against wavenumber
 	p2 <- ggplot(imp2,aes(imp2[,1],imp2[,3])) + geom_line() + scale_x_continuous(limits=c(500,4000)) + scale_x_reverse() + xlab(expression(paste("Wavenumber ","(",cm^-1,")"))) + ylab(expression(paste("IncNodePurity"))) + 
-	 opts(title = "", axis.text.x = theme_text(size=10),
-	  axis.title.x = theme_text(hjust=0.55, vjust = 0, size=10),
-	  axis.text.y = theme_text(size=10),
-	  axis.title.y = theme_text(hjust=0.6, vjust=0.35,angle=90,size=10),
-	  plot.title=theme_text(hjust=0.55,vjust=1,size=10,face="plain"),
-	  panel.border=theme_rect(size=0.75),
+	 labs(title = "", axis.text.x = element_text(size=10),
+	  axis.title.x = element_text(hjust=0.55, vjust = 0, size=10),
+	  axis.text.y = element_text(size=10),
+	  axis.title.y = element_text(hjust=0.6, vjust=0.35,angle=90,size=10),
+	  plot.title=element_text(hjust=0.55,vjust=1,size=10,face="plain"),
+	  panel.border=element_rect(size=0.75),
 	  legend.position="none"
 	   )
 	# Print plots together
@@ -294,12 +314,12 @@ yy<-yyy[j]
 	dataplot <- data.frame(datatr[yy],datatr[waveband]) # Subset y and x variable in new dataframe
 	plottitle <- paste("Wavenumber", as.character(round(as.numeric(gsub("X","",rownames(imp3[nrank,]))),0)))
 	p3 <- ggplot(dataplot, aes(dataplot[,2], dataplot[,1])) + geom_point() + xlab("Derivative absorbance") + ylab(yy) + 
-	  opts(title = plottitle, axis.text.x = theme_text(size=11),
-	  axis.title.x = theme_text(hjust=0.55, vjust = 0, size=12),
-	  axis.text.y = theme_text(size=11),
-	  axis.title.y = theme_text(hjust=0.6, vjust=0.35,angle=90,size=12),
-	  plot.title=theme_text(hjust=0.55,vjust=1,size=13,face="bold"),
-	  panel.border=theme_rect(size=0.75),
+	  labs(title = plottitle, axis.text.x = element_text(size=11),
+	  axis.title.x = element_text(hjust=0.55, vjust = 0, size=12),
+	  axis.text.y = element_text(size=11),
+	  axis.title.y = element_text(hjust=0.6, vjust=0.35,angle=90,size=12),
+	  plot.title=element_text(hjust=0.55,vjust=1,size=13,face="bold"),
+	  panel.border=element_rect(size=0.75),
 	  legend.position="none"
 	   )
 	 p3
@@ -341,12 +361,12 @@ yy<-yyy[j]
 	 geom_vline(xintercept = b11, colour="black", linetype = "dotted", size=0.35) + geom_vline(xintercept = b12, colour="black", linetype = "solid", size=0.35) + geom_vline(xintercept = b13, colour="black",  linetype = "dotted", size=0.35) +
 	 geom_vline(xintercept = b21, colour="black",  linetype = "dotted", size=0.35) + geom_vline(xintercept = b22, colour="black",  linetype = "solid", size=0.35) + geom_vline(xintercept = b23, colour="black",  linetype = "dotted", size=0.35) +
 	 geom_vline(xintercept = b31, colour="black",  linetype = "dotted", size=0.35) + geom_vline(xintercept = b32, colour="black",  linetype = "solid", size=0.35) + geom_vline(xintercept = b33,  colour="black",  linetype = "dotted", size=0.35) +
-	  opts(title = "", axis.text.x = theme_text(size=11),
-	  axis.title.x = theme_text(hjust=0.55, vjust = 0, size=12),
-	  axis.text.y = theme_text(size=11),
-	  axis.title.y = theme_text(hjust=0.6, vjust=0.35,angle=90,size=12),
-	  plot.title=theme_text(hjust=0.55,vjust=1,size=13,face="bold"),
-	  panel.border=theme_rect(size=0.75),
+	  labs(title = "", axis.text.x = element_text(size=11),
+	  axis.title.x = element_text(hjust=0.55, vjust = 0, size=12),
+	  axis.text.y = element_text(size=11),
+	  axis.title.y = element_text(hjust=0.6, vjust=0.35,angle=90,size=12),
+	  plot.title=element_text(hjust=0.55,vjust=1,size=13,face="bold"),
+	  panel.border=element_rect(size=0.75),
 	  legend.position="right"
 	   )
 	mspec
@@ -368,12 +388,12 @@ yy<-yyy[j]
 	 geom_vline(xintercept = b11, colour="black", linetype = "dotted", size=0.35) + geom_vline(xintercept = b12, colour="black", linetype = "solid", size=0.35) + geom_vline(xintercept = b13, colour="black",  linetype = "dotted", size=0.35) +
 	 geom_vline(xintercept = b21, colour="black",  linetype = "dotted", size=0.35) + geom_vline(xintercept = b22, colour="black",  linetype = "solid", size=0.35) + geom_vline(xintercept = b23, colour="black",  linetype = "dotted", size=0.35) +
 	 geom_vline(xintercept = b31, colour="black",  linetype = "dotted", size=0.35) + geom_vline(xintercept = b32, colour="black",  linetype = "solid", size=0.35) + geom_vline(xintercept = b33,  colour="black",  linetype = "dotted", size=0.35) +
-	  opts(title = "", axis.text.x = theme_text(size=11),
-	  axis.title.x = theme_text(hjust=0.55, vjust = 0, size=12),
-	  axis.text.y = theme_text(size=11),
-	  axis.title.y = theme_text(hjust=0.6, vjust=0.35,angle=90,size=12),
-	  plot.title=theme_text(hjust=0.55,vjust=1,size=13,face="bold"),
-	  panel.border=theme_rect(size=0.75),
+	 labs(title = "", axis.text.x = element_text(size=11),
+	  axis.title.x = element_text(hjust=0.55, vjust = 0, size=12),
+	  axis.text.y = element_text(size=11),
+	  axis.title.y = element_text(hjust=0.6, vjust=0.35,angle=90,size=12),
+	  plot.title=element_text(hjust=0.55,vjust=1,size=13,face="bold"),
+	  panel.border=element_rect(size=0.75),
 	  legend.position="right"
 	   )
 	mspect 
@@ -447,6 +467,7 @@ yy<-yyy[j]
 	dev.off()
 }
 ######### Diagnostic test ######### DiagnosisMed library required 
+require(DiagnosisMed)
 rocdat <- data.frame(datatr[,yy], datatr.rf$predicted)
 rocdat <- rename.vars(rocdat, c("datatr...yy.","datatr.rf.predicted"), c("gold","testval"))
 hist(rocdat$gold) # Histogram y variable
