@@ -1,4 +1,4 @@
-
+#A simple method for doing ANOVA
 cg<-read.csv(file.choose())
 str(cg)
 #Remove column 1
