@@ -29,9 +29,7 @@ unzip("rwanda.zip",overwrite=T)
 
 #read raw IR data then preprocess by first derivatives using SG algorithm.
 mir<-read_csv("mir data.csv")
-#Visualize 3% of raw spectra randomly selected
-d<-sample(1:nrow(mir),0.03*nrow(mir))
-view.spectra(mir[d,]) 
+
 #Step 2: Preprocess with SG algorithm
 mir1<-as.matrix(mir[,-1])
 wave<-as.numeric(substr(colnames(mir1),2,19))
@@ -40,13 +38,7 @@ colnames(mir1)<-wave
 de1<-trans(mir1,tr="derivative",order=1,gap=23)
 der1<-rev(as.data.frame(de1$trans))
 colnames(der1)<-paste0("m",wave)
-#Visualize 3% of the preprocessed spectra randomly selected
-par(mfrow=c(1,1))
-view.spectra(der1[d,])
-mtext("First derivative using Savitzky_Golay method",3,0)
-#Save sample of the preprocessed spectra
-dev.copy(png, file="First derivative.png")
-dev.off()
+
 #Save derivative spectra
 der1.ssn<-as.data.frame(cbind(as.vector(mir[,1]),der1)); colnames(der1.ssn)<-c("SSN",colnames(der1))
 write.table(der1.ssn,file="First derivative.csv",sep=",",row.names=FALSE)
