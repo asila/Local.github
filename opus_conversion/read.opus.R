@@ -9,7 +9,12 @@
 #2. converted.folder=Folder where converted tables will be kept
 #3. run the last line to get conversions
 
-	
+is.installed<-function(anypkg){
+	is.element(anypkg, installed.packages()[,1])
+}
+if (!is.installed("hexView")){
+	install.packages("hexView")
+}	
 require(hexView) #Needs readRaw function from this library
 opus <- function(file.name, sp=NULL, codes=c("ZFF","RES","SNM","DAT","LWN","FXV","LXV","NPT","MXY","MNY","END","TIM"), plot.spectra=FALSE, print.progress=FALSE, speclib="ICRAF")
 	{
