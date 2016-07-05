@@ -14,6 +14,9 @@ suppressMessages(library(doParallel))
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
 suppressMessages(library(downloader))
+suppressMessages(library(prospectr))
+suppressMessages(library(randomForest))
+
 registerDoParallel()
 getDoParWorkers()
 
@@ -21,31 +24,33 @@ getDoParWorkers()
 #install.packages(c("package1, package2,...packagen"), dependencies=TRUE)
 
 #Start by setting working directory
-a<-"~/Training/India/Support_Sinha"#Mac OSX
+a<-"~/Studies_data/Mercy_calibrations"#Mac OSX
 #a<-"D:/oaf"#Windows
 setwd(a)
-download("https://www.dropbox.com/s/em8w2cdnnnkdrvo/rwanda.zip","rwanda.zip", mode="wb")
-unzip("rwanda.zip",overwrite=T)
+#download("https://www.dropbox.com/s/em8w2cdnnnkdrvo/rwanda.zip","rwanda.zip", mode="wb")
+#unzip("rwanda.zip",overwrite=T)
 
 #read raw IR data then preprocess by first derivatives using SG algorithm.
-mir<-read_csv("MIR_calval_data.csv")
+mir<-read_csv("~/Dropbox/AfSIS_reporting_data/Seperated_datasets/Calibration_Htsxt_MIR.csv")
+#Read reference data
+ref<-read_csv("~/Studies_data/data/Calibration_ref_data.csv")
+#k<-which(mir$SSN%in%ref$ICRAF_ID)
 
+#mir<-mir[k,]
 #Step 2: Preprocess with SG algorithm
-mir1<-as.matrix(mir[,-c(1:7)])#Exclude metadata variables
+mir1<-as.matrix(mir[,-1])#Exclude metadata variables
 wave<-as.numeric(substr(colnames(mir1),2,19))
 colnames(mir1)<-wave
 #First derivative
 de1<-trans(mir1,tr="derivative",order=1,gap=23)
 der1<-rev(as.data.frame(de1$trans))
-colnames(der1)<-paste0("a",wave)
+colnames(der1)<-paste0("m",wave)
 
 #Save derivative spectra
 der1.ssn<-as.data.frame(cbind(as.vector(mir[,1]),der1)); colnames(der1.ssn)<-c("SSN",colnames(der1))
 write.table(der1.ssn,file="First derivative.csv",sep=",",row.names=FALSE)
-#Read reference data
-ref<-read_csv("reference_calval_data.csv")
 #merge with first derivative preprocessed spectra
-ref.mir<-merge(ref,der1.ssn)
+ref.mir<-merge(ref,der1.ssn,by.x="ICRAF_ID",by.y="SSN")
 rc<-colnames(ref)
 #which columns contains reference data?
 ref<-ref.mir[,rc]
@@ -62,6 +67,14 @@ if(!file.exists("calibration_plots")){dir.create("calibration_plots")}
 set.seed(67523)
 testing<-sample(1:nrow(ref.mir),0.33*nrow(ref.mir))#Hold-out a third of the calibration set for validation
 testing<-which(ref.mir$set=="val") #Use the val set rows
+
+#Use Kennard_Stone
+sel <- kenStone(spectra,k=round(0.33*nrow(spectra)),pc=.99)
+#View selected samples
+plot(sel$pc[,1:2],xlab='PC1',ylab='PC2')
+points(sel$pc[sel$model,1:2],pch=19,col=2) # points selected for calibration
+testing<-sel$model
+
 #### This chunk is optional; run it if you want to share the testing and training set with other people################
 #Set validation rows to 2 and calibration to 1 and save in a new column -set
 #ref.mir$set<-rep(NA,nrow(ref.mir))
@@ -76,7 +89,7 @@ testing<-which(ref.mir$set=="val") #Use the val set rows
 
 #Loop for calibration of all soil properties in the reference set starts here
 msummary<-NULL
-hd<-colnames(ref)[-c(1:2)]
+hd<-colnames(ref)[-1]
 for (q in 1:length(hd)){
 refq<-which(colnames(ref)%in%hd[q])
 ref.q<-ref[,refq]
@@ -90,25 +103,36 @@ cal<-na.omit(cal)
 val<-na.omit(val)
 trainX <-cal[, -1]
 trainY <-cal[,1]
-mgrid<-expand.grid(.mtry=seq(50,600,50))
-rf.m <- train(trainY~., method="rf", data=cal[,-1],
-			metric="RMSE",
-			maximise=FALSE,
-			ntrees=3,# more tuning values requires to be tested
-			samplesize=0.5*nrow(cal),
-			corr.bias=TRUE,
-			trControl=trainControl(method="oob"),
-			tuneGrid=mgrid)
+#mgrid<-expand.grid(.mtry=seq(50,600,50))
+rf.m<-randomForest(trainY~.,data=cal[,-1],corr.bias=TRUE)
+pred2 <- predict(rf.m ,cal)
+plot(pred2,cal[,1])
+
+pred3 <- predict(rf.m ,val)
+plot(pred3,val[,1])
+
+#rf.m <- train(trainY~., method="rf", data=cal[,-1],
+			#metric="RMSE",
+			#maximise=FALSE,
+			#ntrees=3,# more tuning values requires to be tested
+			#samplesize=0.5*nrow(cal),
+			#corr.bias=TRUE,
+			#trControl=trainControl(method="oob"),
+			#tuneGrid=mgrid)
 #Save the model in the currect working directory.
-trees<-as.numeric(rf.m$bestTune)[1]
-l<- which(rf.m$results$mtry==trees)
+#trees<-as.numeric(rf.m$bestTune)[1]
+#l<- which(rf.m$results$mtry==trees)
 
 #Get final model to compute coefficient for variation explained
-predi<-predict(rf.m,rf.m$trainingData)
-y<-rf.m$finalModel$y
+#predi<-predict(rf.m,rf.m$trainingData)
+#y<-rf.m$finalModel$y
+predi<-predict(rf.m ,cal)
+y<-trainY
 training.parameters<-round(postResample(predi,y),3)#computes RMSE and R-squared values for the calibration set
 #Predict qth soil property of the holdoutset using  the MIR data and compare with the actual measurement
-predi.test<-predict(rf.m,val[,-1])
+#predi.test<-predict(rf.m,val[,-1])
+#y.test<-val[,1]
+predi.test<-predict(rf.m ,val)
 y.test<-val[,1]
 testing.parameters<-round(postResample(predi.test,y.test),3)#computes RMSE and R-squared values for the validation set
 model.summary<-c(hd[q],training.parameters,testing.parameters)
@@ -194,20 +218,22 @@ colnames(cal)<-c(colnames(ref)[refq],colnames(spectra))
 cal<-na.omit(cal)
 trainX <-cal[, -1]
 trainY <-cal[,1]
-mgrid<-expand.grid(.mtry=seq(50,600,50))
-rf.m <- train(trainY~., method="rf", data=cal[,-1],
-			metric="RMSE",
-			maximise=FALSE,
-			ntrees=3,
-			corr.bias=TRUE,
-			trControl=trainControl(method="oob"),
-			tuneGrid=mgrid)
+#mgrid<-expand.grid(.mtry=seq(50,600,50))
+rf.m<-randomForest(trainY~.,data=cal[,-1],corr.bias=TRUE)
+
+#rf.m <- train(trainY~., method="rf", data=cal[,-1],
+			#metric="RMSE",
+			#maximise=FALSE,
+			#ntrees=3,
+			#corr.bias=TRUE,
+			#trControl=trainControl(method="oob"),
+			#tuneGrid=mgrid)
 #Save the model in the currect working directory.
-trees<-as.numeric(rf.m$bestTune)[1]
-l<- which(rf.m$results$mtry==trees)
+#trees<-as.numeric(rf.m$bestTune)[1]
+#l<- which(rf.m$results$mtry==trees)
 #Get final model to compute coefficient for variation explained
-predi<-predict(rf.m,rf.m$trainingData)
-y<-rf.m$finalModel$y
+predi<-predict(rf.m,cal)
+y<-trainY
 training.parameters<-c(hd[q],round(postResample(predi,y),3))
 msummary<-rbind(msummary,training.parameters)
 saveRDS(rf.m,file=paste0(b,"/","Full_Models/",hd[q],".rds"))
@@ -236,7 +262,7 @@ p.all<- ggplot(data=rfp, aes(x = y, y =predi)) +
 		p.all<-p.all+theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))     
 #We need to predict the full data set using the full calibration data
-predicted.pq<-predict(rf.m,der1.ssn[,-1])
+predicted.pq<-predict(rf.m,cal)
 all.predicted<-cbind(all.predicted,predicted.pq)
 fig.name=paste0(b,"/","Full_calibration_plots/",hd[q],".png")#This version does not save full calibration plots.
 png(file=fig.name,height= 600,width=600)

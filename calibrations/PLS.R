@@ -109,7 +109,7 @@ predi<-predict(rf.m,rf.m$trainingData)
 y<-trainY
 training.parameters<-round(postResample(predi,y),3)#computes RMSE and R-squared values for the calibration set
 #Predict qth soil property of the holdoutset using  the MIR data and compare with the actual measurement
-predi.test<-predict(rf.m,val[,-1])
+predi.test<-exp(predict(rf.m,val[,-1]))
 y.test<-val[,1]
 #Get PCs used
 PCs<-rf.m$finalModel$ncomp
